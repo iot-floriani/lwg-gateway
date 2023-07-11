@@ -3,9 +3,9 @@
 	 \____ \| ___ |    (_   _) ___ |/ ___)  _ \
 	 _____) ) ____| | | || |_| ____( (___| | | |
 	(______/|_____)_|_|_| \__)_____)\____)_| |_|
-	  (C)2020 Semtech
+	  (C)2023 Semtech
 
-SX1302 LoRa Gateway project
+SX1303 LoRa Gateway project
 ===========================
 
 ## 1. Core library: libloragw
