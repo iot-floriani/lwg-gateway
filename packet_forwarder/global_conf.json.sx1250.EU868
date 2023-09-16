@@ -88,7 +88,7 @@
     },
 
     "gateway_conf": {
-        "gateway_ID": "0X0016C001F10FC53C",
+        "gateway_ID": "00016C001F10FC53",
         /* change with default server address/ports */
         "server_address": "eu1.cloud.thethings.network",
         "serv_port_up": 1730,
