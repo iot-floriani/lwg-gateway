@@ -91,8 +91,8 @@
         "gateway_ID": "00016C001F10FC53",
         /* change with default server address/ports */
         "server_address": "eu1.cloud.thethings.network",
-        "serv_port_up": 1730,
-        "serv_port_down": 1730,
+        "serv_port_up": 1700,
+        "serv_port_down": 1700,
 	"server_url": "https://www.iot-gateway.it/req/gtw-64a6d0627110d/posts.php",
         /* adjust the following parameters for your network */
         "keepalive_interval": 10,
