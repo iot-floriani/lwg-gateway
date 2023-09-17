@@ -2484,8 +2484,8 @@ void thread_up(void) {
 
         /* send datagram to server */
         send(sock_up, (void *)buff_up, buff_index, 0);
-		/* send datagram to server url*/
-		requests(serv_url,(void *)buff_up);		
+	/* send datagram to server url*/
+	/* requests(serv_url,(void *)buff_up);*/		
         clock_gettime(CLOCK_MONOTONIC, &send_time);
         pthread_mutex_lock(&mx_meas_up);
         meas_up_dgram_sent += 1;
