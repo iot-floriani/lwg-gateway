@@ -1224,13 +1224,13 @@ static int requests(const char * serv_url, const char * packet_raw) {
     curl_global_init(CURL_GLOBAL_ALL);
     curl = curl_easy_init();
     if(curl) {
-		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
         curl_easy_setopt(curl, CURLOPT_URL, serv_url);
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, packet_raw);
         res = curl_easy_perform(curl);
         if(res != CURLE_OK) {
-			MSG("ERROR: Request failed %s\n", curl_easy_strerror(res));
-		    exit(EXIT_FAILURE);	
+		MSG("ERROR: Request failed %s\n", curl_easy_strerror(res));
+		exit(EXIT_FAILURE);	
         }
         curl_easy_cleanup(curl);
     }
