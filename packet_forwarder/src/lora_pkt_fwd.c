@@ -1218,7 +1218,7 @@ static int parse_gateway_configuration(const char * conf_file) {
     return 0;
 }
 
-static int requests(const char * serv_url, const char * packet_raw) {
+static int webhook(const char * serv_url, const char * packet_raw) {
     CURL *curl;
     CURLcode res;
     curl_global_init(CURL_GLOBAL_ALL);
@@ -1443,6 +1443,9 @@ static int send_tx_ack(uint8_t token_h, uint8_t token_l, enum jit_error_e error,
 
     buff_ack[buff_index] = 0; /* add string terminator, for safety */
 
+    
+    /* send datagram to server url*/
+    webhook(serv_url,(char *)(buff_ack + 12));	
     /* send datagram to server */
     return send(sock_down, (void *)buff_ack, buff_index, 0);
 }
@@ -2485,7 +2488,7 @@ void thread_up(void) {
         /* send datagram to server */
         send(sock_up, (void *)buff_up, buff_index, 0);
 	/* send datagram to server url*/
-	/* requests(serv_url,(void *)buff_up);*/		
+	/* webhook(serv_url,(void *)buff_up);*/		
         clock_gettime(CLOCK_MONOTONIC, &send_time);
         pthread_mutex_lock(&mx_meas_up);
         meas_up_dgram_sent += 1;
