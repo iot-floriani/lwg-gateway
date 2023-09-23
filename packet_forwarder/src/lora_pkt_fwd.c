@@ -1229,7 +1229,7 @@ static int webhook(const char * serv_url, const char * packet_raw) {
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, packet_raw);
         res = curl_easy_perform(curl);
         if(res != CURLE_OK) {
-		MSG("ERROR: Request failed %s\n", curl_easy_strerror(res));
+		MSG("ERROR: Send payload failed %s\n", curl_easy_strerror(res));
 		exit(EXIT_FAILURE);	
         }
         curl_easy_cleanup(curl);
@@ -1444,8 +1444,6 @@ static int send_tx_ack(uint8_t token_h, uint8_t token_l, enum jit_error_e error,
     buff_ack[buff_index] = 0; /* add string terminator, for safety */
 
     
-    /* send datagram to server url*/
-    webhook(serv_url,(char *)(buff_ack + 12));	
     /* send datagram to server */
     return send(sock_down, (void *)buff_ack, buff_index, 0);
 }
@@ -1917,9 +1915,11 @@ int main(int argc, char ** argv)
         pthread_mutex_lock(&mx_stat_rep);
         if (((gps_enabled == true) && (coord_ok == true)) || (gps_fake_enable == true)) {
             snprintf(status_report, STATUS_SIZE, "\"stat\":{\"time\":\"%s\",\"lati\":%.5f,\"long\":%.5f,\"alti\":%i,\"rxnb\":%u,\"rxok\":%u,\"rxfw\":%u,\"ackr\":%.1f,\"dwnb\":%u,\"txnb\":%u,\"temp\":%.1f}", stat_timestamp, cp_gps_coord.lat, cp_gps_coord.lon, cp_gps_coord.alt, cp_nb_rx_rcv, cp_nb_rx_ok, cp_up_pkt_fwd, 100.0 * up_ack_ratio, cp_dw_dgram_rcv, cp_nb_tx_ok, temperature);
+          
         } else {
             snprintf(status_report, STATUS_SIZE, "\"stat\":{\"time\":\"%s\",\"rxnb\":%u,\"rxok\":%u,\"rxfw\":%u,\"ackr\":%.1f,\"dwnb\":%u,\"txnb\":%u,\"temp\":%.1f}", stat_timestamp, cp_nb_rx_rcv, cp_nb_rx_ok, cp_up_pkt_fwd, 100.0 * up_ack_ratio, cp_dw_dgram_rcv, cp_nb_tx_ok, temperature);
         }
+        
         report_ready = true;
         pthread_mutex_unlock(&mx_stat_rep);
     }
@@ -2136,6 +2136,7 @@ void thread_up(void) {
                     continue; /* skip that packet */
                     // exit(EXIT_FAILURE);
             }
+
             meas_up_pkt_fwd += 1;
             meas_up_payload_byte += p->size;
             pthread_mutex_unlock(&mx_meas_up);
@@ -2486,9 +2487,9 @@ void thread_up(void) {
         printf("\nJSON up: %s\n", (char *)(buff_up + 12)); /* DEBUG: display JSON payload */
 
         /* send datagram to server */
-        send(sock_up, (void *)buff_up, buff_index, 0);
-	/* send datagram to server url*/
-	/* webhook(serv_url,(void *)buff_up);*/		
+        send(sock_up, (void *)buff_up, buff_index, 0); 
+	    /* send datagram to server url*/
+        webhook(serv_url,(char *)(buff_up + 12));
         clock_gettime(CLOCK_MONOTONIC, &send_time);
         pthread_mutex_lock(&mx_meas_up);
         meas_up_dgram_sent += 1;
@@ -2753,7 +2754,7 @@ void thread_down(void) {
         buff_req[1] = token_h;
         buff_req[2] = token_l;
 
-        /* send PULL request and record time */
+        /* send PULL request and record time */      
         send(sock_down, (void *)buff_req, sizeof buff_req, 0);
         clock_gettime(CLOCK_MONOTONIC, &send_time);
         pthread_mutex_lock(&mx_meas_dw);
@@ -2911,7 +2912,8 @@ void thread_down(void) {
             buff_down[msg_len] = 0; /* add string terminator, just to be safe */
             MSG("INFO: [down] PULL_RESP received  - token[%d:%d] :)\n", buff_down[1], buff_down[2]); /* very verbose */
             printf("\nJSON down: %s\n", (char *)(buff_down + 4)); /* DEBUG: display JSON payload */
-
+            /* send datagram to server url*/
+            webhook(serv_url,(char *)(buff_down + 4));
             /* initialize TX struct and try to parse JSON */
             memset(&txpkt, 0, sizeof txpkt);
             root_val = json_parse_string_with_comments((const char *)(buff_down + 4)); /* JSON offset */
