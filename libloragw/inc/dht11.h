@@ -7,7 +7,7 @@
 #define PWNPIN		26
 int dht11_dat[5] = { 0, 0, 0, 0, 0 };
  
-void read_dht11_dat()
+int get_temperature(float* temperature) {
 {
 	uint8_t laststate	= HIGH;
 	uint8_t counter		= 0;
@@ -51,24 +51,9 @@ void read_dht11_dat()
 	     (dht11_dat[4] == ( (dht11_dat[0] + dht11_dat[1] + dht11_dat[2] + dht11_dat[3]) & 0xFF) ) )
 	{
 		f = dht11_dat[2] * 9. / 5. + 32;
-		printf( "Humidity = %d.%d %% Temperature = %d.%d C (%.1f F)\n",
-			dht11_dat[0], dht11_dat[1], dht11_dat[2], dht11_dat[3], f );
+		printf( "Humidity = %d.%d %% Temperature = %d.%d C (%.1f F)\n", dht11_dat[0], dht11_dat[1], dht11_dat[2], dht11_dat[3], f );
 	}else  {
 		printf( "Data not good, skip\n" );
 	}
-}
- 
-int main( void )
-{
-	printf( "Raspberry Pi wiringPi DHT11 Temperature test program\n" );
- 
-	if ( wiringPiSetup() == -1 )
-		exit( 1 );
- 
-	while ( 1 )
-	{
-		read_dht11_dat();
-		delay( 1000 ); 
-	}
-	return(0);
+	return f
 }
