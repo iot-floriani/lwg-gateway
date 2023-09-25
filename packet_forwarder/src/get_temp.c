@@ -12,16 +12,13 @@ void read_dht11_dat()
 	uint8_t counter		= 0;
 	uint8_t j		= 0, i;
 	float	f; 
- 
-	dht11_dat[0] = dht11_dat[1] = dht11_dat[2] = dht11_dat[3] = dht11_dat[4] = 0;
- 
-	pinMode( DHTPIN, OUTPUT );
+ 	dht11_dat[0] = dht11_dat[1] = dht11_dat[2] = dht11_dat[3] = dht11_dat[4] = 0;
+ 	pinMode( DHTPIN, OUTPUT );
 	digitalWrite( DHTPIN, LOW );
 	delay( 18 );
 	digitalWrite( DHTPIN, HIGH );
 	delayMicroseconds( 40 );
 	pinMode( DHTPIN, INPUT );
- 
 	for ( i = 0; i < MAXTIMINGS; i++ )
 	{
 		counter = 0;
@@ -71,6 +68,5 @@ int main( void )
 		read_dht11_dat();
 		delay( 1000 ); 
 	}
- 
 	return(0);
 }
