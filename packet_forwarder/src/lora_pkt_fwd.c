@@ -2404,7 +2404,7 @@ void thread_up(void) {
             ++buff_index;
             
             /* Received pkt from mote */
-            w = snprintf((char *)(buff_wh + buff_wh_index), TX_BUFF_SIZE-buff_wh_index, "{\"end_device_ids\":{\"dev_addr\":\"%08X\",\"fcnt\":\"%u\"}", mote_addr, mote_fcnt);   
+            w = snprintf((char *)(buff_wh + buff_wh_index), TX_BUFF_SIZE-buff_wh_index, "{\"end_device_ids\":{\"dev_addr\":\"%08X\",\"fcnt\":%u}", mote_addr, mote_fcnt);   
             if (w > 0) {
                 buff_wh_index += w;
             } else {
@@ -2422,7 +2422,7 @@ void thread_up(void) {
                 exit(EXIT_FAILURE);
             }
 
-            w = snprintf((char *)(buff_wh + buff_wh_index), TX_BUFF_SIZE-buff_wh_index, "\"},\"gateway_ids\":{\"gateway_id\":\"%016llX\"}",lgwm);   
+            w = snprintf((char *)(buff_wh + buff_wh_index), TX_BUFF_SIZE-buff_wh_index, "\",\"size\":%u},\"gateway_ids\":{\"gateway_id\":\"%016llX\"}",p->size,lgwm);   
             if (w > 0) {
                 buff_wh_index += w;
             } else {
