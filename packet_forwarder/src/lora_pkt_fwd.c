@@ -225,7 +225,6 @@ static struct coord_s meas_gps_err; /* GPS position of the gateway */
 static pthread_mutex_t mx_stat_rep = PTHREAD_MUTEX_INITIALIZER; /* control access to the status report */
 static bool report_ready = false; /* true when there is a new report to send to the server */
 static char status_report[STATUS_SIZE]; /* status report as a JSON object */
-
 /* beacon parameters */
 static uint32_t beacon_period = 0; /* set beaconing period, must be a sub-multiple of 86400, the nb of sec in a day */
 static uint32_t beacon_freq_hz = DEFAULT_BEACON_FREQ_HZ; /* set beacon TX frequency, in Hz */
@@ -1915,9 +1914,8 @@ int main(int argc, char ** argv)
         pthread_mutex_lock(&mx_stat_rep);
         if (((gps_enabled == true) && (coord_ok == true)) || (gps_fake_enable == true)) {
             snprintf(status_report, STATUS_SIZE, "\"stat\":{\"time\":\"%s\",\"lati\":%.5f,\"long\":%.5f,\"alti\":%i,\"rxnb\":%u,\"rxok\":%u,\"rxfw\":%u,\"ackr\":%.1f,\"dwnb\":%u,\"txnb\":%u,\"temp\":%.1f}", stat_timestamp, cp_gps_coord.lat, cp_gps_coord.lon, cp_gps_coord.alt, cp_nb_rx_rcv, cp_nb_rx_ok, cp_up_pkt_fwd, 100.0 * up_ack_ratio, cp_dw_dgram_rcv, cp_nb_tx_ok, temperature);
-          
         } else {
-            snprintf(status_report, STATUS_SIZE, "\"stat\":{\"time\":\"%s\",\"rxnb\":%u,\"rxok\":%u,\"rxfw\":%u,\"ackr\":%.1f,\"dwnb\":%u,\"txnb\":%u,\"temp\":%.1f}", stat_timestamp, cp_nb_rx_rcv, cp_nb_rx_ok, cp_up_pkt_fwd, 100.0 * up_ack_ratio, cp_dw_dgram_rcv, cp_nb_tx_ok, temperature);
+            snprintf(status_report, STATUS_SIZE, "\"stat\":{\"time\":\"%s\",\"rxnb\":%u,\"rxok\":%u,\"rxfw\":%u,\"ackr\":%.1f,\"dwnb\":%u,\"txnb\":%u,\"temp\":%.1f,", stat_timestamp, cp_nb_rx_rcv, cp_nb_rx_ok, cp_up_pkt_fwd, 100.0 * up_ack_ratio, cp_dw_dgram_rcv, cp_nb_tx_ok, temperature);
         }
         
         report_ready = true;
@@ -1985,7 +1983,7 @@ int main(int argc, char ** argv)
 /* --- THREAD 1: RECEIVING PACKETS AND FORWARDING THEM ---------------------- */
 
 void thread_up(void) {
-    int i, j, k; /* loop variables */
+    int i, j, k, w; /* loop variables */
     unsigned pkt_in_dgram; /* nb on Lora packet in the current datagram */
     char stat_timestamp[24];
     time_t t;
@@ -2003,7 +2001,11 @@ void thread_up(void) {
     uint8_t buff_up[TX_BUFF_SIZE]; /* buffer to compose the upstream packet */
     int buff_index;
     uint8_t buff_ack[32]; /* buffer to receive acknowledges */
-
+    
+    /* webhook buffers */
+    uint8_t buff_wh[TX_BUFF_SIZE]; /* buffer webhook to compose the upstream packet */
+    int buff_wh_index;
+    
     /* protocol variables */
     uint8_t token_h; /* random token for acknowledgement matching */
     uint8_t token_l; /* random token for acknowledgement matching */
@@ -2080,6 +2082,7 @@ void thread_up(void) {
         buff_up[1] = token_h;
         buff_up[2] = token_l;
         buff_index = 12; /* 12-byte header */
+        buff_wh_index = 12; /* 12-byte header */
 
         /* start of JSON structure */
         memcpy((void *)(buff_up + buff_index), (void *)"{\"rxpk\":[", 9);
@@ -2142,6 +2145,7 @@ void thread_up(void) {
             pthread_mutex_unlock(&mx_meas_up);
             printf( "\nINFO: Received pkt from mote: %08X (fcnt=%u)\n", mote_addr, mote_fcnt );
 
+                     
             /* Start of packet, add inter-packet separator if necessary */
             if (pkt_in_dgram == 0) {
                 buff_up[buff_index] = '{';
@@ -2398,7 +2402,39 @@ void thread_up(void) {
             }
             buff_up[buff_index] = '"';
             ++buff_index;
+            
+            /* Received pkt from mote */
+            w = snprintf((char *)(buff_wh + buff_wh_index), TX_BUFF_SIZE-buff_wh_index, "{\"end_device_ids\":{\"dev_addr\":\"%08X\",\"fcnt\":\"%u\"}", mote_addr, mote_fcnt);   
+            if (w > 0) {
+                buff_wh_index += w;
+            } else {
+                MSG("ERROR: [up] snprintf failed line %u\n", (__LINE__ - 4));
+                exit(EXIT_FAILURE);
+            }
+            /* Packet base64-encoded payload, 14-350 useful chars */
+            memcpy((void *)(buff_wh + buff_wh_index), (void *)",\"uplink_message\":{\"frm_payload\":\"", 34);
+            buff_wh_index += 34;
+            w = bin_to_b64(p->payload, p->size, (char *)(buff_wh + buff_wh_index), 341); /* 255 bytes = 340 chars in b64 + null char */
+            if (w>=0) {
+                buff_wh_index += w;
+            } else {
+                MSG("ERROR: [up] bin_to_b64 failed line %u\n", (__LINE__ - 5));
+                exit(EXIT_FAILURE);
+            }
 
+            w = snprintf((char *)(buff_wh + buff_wh_index), TX_BUFF_SIZE-buff_wh_index, "\"},\"gateway_ids\":{\"gateway_id\":\"%016llX\"}",lgwm);   
+            if (w > 0) {
+                buff_wh_index += w;
+            } else {
+                MSG("ERROR: [up] snprintf failed line %u\n", (__LINE__ - 4));
+                exit(EXIT_FAILURE);
+            }
+            /* End of packet serialization */
+            buff_wh[buff_wh_index] = '}';
+            ++buff_wh_index;
+            buff_wh[buff_wh_index] = 0; /* add string terminator, for safety */
+             
+            
             /* End of packet serialization */
             buff_up[buff_index] = '}';
             ++buff_index;
@@ -2477,19 +2513,21 @@ void thread_up(void) {
                 MSG("ERROR: [up] snprintf failed line %u\n", (__LINE__ - 5));
                 exit(EXIT_FAILURE);
             }
+        } else {
+            /* send datagram to server url*/
+            printf("\nJSON webhook: %s\n", (char *)(buff_wh + 12)); /* DEBUG: display JSON payload */ 
+            webhook(serv_url,(char *)(buff_wh + 12));
         }
 
         /* end of JSON datagram payload */
         buff_up[buff_index] = '}';
         ++buff_index;
         buff_up[buff_index] = 0; /* add string terminator, for safety */
-
+        
         printf("\nJSON up: %s\n", (char *)(buff_up + 12)); /* DEBUG: display JSON payload */
 
         /* send datagram to server */
         send(sock_up, (void *)buff_up, buff_index, 0); 
-	    /* send datagram to server url*/
-        webhook(serv_url,(char *)(buff_up + 12));
         clock_gettime(CLOCK_MONOTONIC, &send_time);
         pthread_mutex_lock(&mx_meas_up);
         meas_up_dgram_sent += 1;
@@ -2912,8 +2950,6 @@ void thread_down(void) {
             buff_down[msg_len] = 0; /* add string terminator, just to be safe */
             MSG("INFO: [down] PULL_RESP received  - token[%d:%d] :)\n", buff_down[1], buff_down[2]); /* very verbose */
             printf("\nJSON down: %s\n", (char *)(buff_down + 4)); /* DEBUG: display JSON payload */
-            /* send datagram to server url*/
-            webhook(serv_url,(char *)(buff_down + 4));
             /* initialize TX struct and try to parse JSON */
             memset(&txpkt, 0, sizeof txpkt);
             root_val = json_parse_string_with_comments((const char *)(buff_down + 4)); /* JSON offset */
