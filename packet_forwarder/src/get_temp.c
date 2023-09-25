@@ -4,6 +4,7 @@
 #include <stdint.h>
 #define MAXTIMINGS	85
 #define DHTPIN		7
+#define PWNPIN		26
 int dht11_dat[5] = { 0, 0, 0, 0, 0 };
  
 void read_dht11_dat()
@@ -14,6 +15,7 @@ void read_dht11_dat()
 	float	f; 
  	dht11_dat[0] = dht11_dat[1] = dht11_dat[2] = dht11_dat[3] = dht11_dat[4] = 0;
  	pinMode( DHTPIN, OUTPUT );
+	pinMode( PWMPIN, OUTPUT );
 	digitalWrite( DHTPIN, LOW );
 	delay( 18 );
 	digitalWrite( DHTPIN, HIGH );
