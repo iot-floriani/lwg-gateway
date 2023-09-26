@@ -1,0 +1,12 @@
+.Adding curl to your project
+/Programming in C/C++ / Networking / curl / .Adding curl to your project
+Command line curl is separate to libcurl that you can use in programs.
+
+Install curl
+Installing the OpenSSL version
+
+sudo apt-get install libcurl4-openssl-dev
+Using the Library In A NetBeans Project
+Including the library header file
+
+#include <curl/curl.h>
