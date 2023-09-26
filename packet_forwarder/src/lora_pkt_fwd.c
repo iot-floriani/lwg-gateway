@@ -2422,7 +2422,7 @@ void thread_up(void) {
                 exit(EXIT_FAILURE);
             }
 
-            w = snprintf((char *)(buff_wh + buff_wh_index), TX_BUFF_SIZE-buff_wh_index, "\",\"size\":%u},\"gateway_ids\":{\"gateway_id\":\"%016llX\"}",p->size,lgwm);   
+            w = snprintf((char *)(buff_wh + buff_wh_index), TX_BUFF_SIZE-buff_wh_index, "\",\"size\":%u},\"gateway_ids\":{\"eui\":\"%016llX\"}",p->size,lgwm);
             if (w > 0) {
                 buff_wh_index += w;
             } else {
