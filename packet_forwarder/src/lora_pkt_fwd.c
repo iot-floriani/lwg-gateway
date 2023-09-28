@@ -2513,7 +2513,9 @@ void thread_up(void) {
                 MSG("ERROR: [up] snprintf failed line %u\n", (__LINE__ - 5));
                 exit(EXIT_FAILURE);
             }
-        } else {
+            /* send stat to server url*/
+	    webhook(serv_url,(char *)(buff_up + 12));	
+	} else {
             /* send datagram to server url*/
             printf("\nJSON webhook: %s\n", (char *)(buff_wh + 12)); /* DEBUG: display JSON payload */ 
             webhook(serv_url,(char *)(buff_wh + 12));
