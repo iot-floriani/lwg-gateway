@@ -88,15 +88,15 @@
     },
 
     "gateway_conf": {
-        "gateway_ID": "0000000000000000000",
+        "gateway_ID": "00016C001F10FC53",
         /* change with default server address/ports */
         "server_address": "eu1.cloud.thethings.network",
         "serv_port_up": 1700,
         "serv_port_down": 1700,
-	"server_url": "https://",
+	"server_url": "https://www.iot-gateway.it/req/gtw-64a6d0627110d/posts.php",
         /* adjust the following parameters for your network */
         "keepalive_interval": 10,
-        "stat_interval": 30,
+        "stat_interval": 60,
         "push_timeout_ms": 100,
         /* forward only valid packets */
         "forward_crc_valid": true,
@@ -105,8 +105,8 @@
         /* GPS configuration */
         "gps_tty_path": "/dev/ttyS0",
         /* GPS reference coordinates */
-        "ref_latitude": 0.0,
-        "ref_longitude": 0.0,
+        "ref_latitude": 45.538280113452075,
+        "ref_longitude": 11.550277328796756,
         "ref_altitude": 0,
         /* Beaconing parameters */
         "beacon_period": 0,
